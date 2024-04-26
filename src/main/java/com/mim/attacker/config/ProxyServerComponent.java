@@ -1,6 +1,6 @@
 package com.mim.attacker.config;
 
-import com.mim.attacker.service.RequestInterceptorService;
+import com.mim.attacker.service.InterceptorService;
 import io.netty.handler.codec.http.FullHttpRequest;
 import org.littleshoot.proxy.HttpFilters;
 import org.littleshoot.proxy.HttpFiltersAdapter;
@@ -18,9 +18,9 @@ import io.netty.handler.codec.http.HttpResponse;
 
 @Component
 public class ProxyServerComponent implements CommandLineRunner {
-    private final RequestInterceptorService requestInterceptorService;
+    private final InterceptorService requestInterceptorService;
 
-    public ProxyServerComponent(RequestInterceptorService requestInterceptorService){
+    public ProxyServerComponent(InterceptorService requestInterceptorService){
         this.requestInterceptorService = requestInterceptorService;
     }
 
@@ -57,12 +57,8 @@ public class ProxyServerComponent implements CommandLineRunner {
                             @Override
                             public HttpObject serverToProxyResponse(HttpObject httpObject) {
                                 // Modify the response here as needed
-                                if (httpObject instanceof FullHttpRequest) {
-                                    // HttpResponse response = (HttpResponse) httpObject;
-                                    // System.out.println("Response intercepted: " + response.getStatus());
-
-                                    FullHttpRequest fullHttpRequest = (FullHttpRequest) httpObject;
-                                    requestInterceptorService.processRequest(fullHttpRequest);
+                                if (httpObject instanceof HttpResponse) {
+                                    requestInterceptorService.processResponse((HttpResponse) httpObject);
                                 }
                                 return httpObject;
                             }
