@@ -33,7 +33,7 @@ public class InterceptorService {
             ByteBuf content = fullRequest.content();
             payload = content.toString(CharsetUtil.UTF_8);
         }
-
+        System.out.println("Writing intercepted request to csv file");
         loggingService.logToCsv("Request", method, uri, "-", headers, payload);
     }
 
@@ -51,7 +51,7 @@ public class InterceptorService {
                 content = buffer.toString(CharsetUtil.UTF_8);
             }
         }
-
+        System.out.println("Writing intercepted response to csv file");
         loggingService.logToCsv("Response", "-", "-", status, headers, content);
     }
 

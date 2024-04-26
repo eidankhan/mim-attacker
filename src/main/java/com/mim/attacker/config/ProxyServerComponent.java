@@ -46,11 +46,12 @@ public class ProxyServerComponent implements CommandLineRunner {
                         return new HttpFiltersAdapter(originalRequest) {
                             @Override
                             public HttpResponse clientToProxyRequest(HttpObject httpObject) {
+                                System.out.println("Intercepting request");
                                 // Modify the request here as needed
                                 if (httpObject instanceof FullHttpRequest) {
                                     FullHttpRequest fullRequest = (FullHttpRequest) httpObject;
                                     requestInterceptorService.processRequest(fullRequest);
-                                    requestInterceptorService.processRequestAsJSON(fullRequest);
+                                    // requestInterceptorService.processRequestAsJSON(fullRequest);
                                 }
                                 return null;
                             }
@@ -58,9 +59,10 @@ public class ProxyServerComponent implements CommandLineRunner {
                             @Override
                             public HttpObject serverToProxyResponse(HttpObject httpObject) {
                                 // Modify the response here as needed
+                                System.out.println("Intercepting response");
                                 if (httpObject instanceof HttpResponse) {
                                     requestInterceptorService.processResponse((HttpResponse) httpObject);
-                                    requestInterceptorService.processResponseAsJSON((HttpResponse) httpObject);
+                                    // requestInterceptorService.processResponseAsJSON((HttpResponse) httpObject);
                                 }
                                 return httpObject;
                             }
