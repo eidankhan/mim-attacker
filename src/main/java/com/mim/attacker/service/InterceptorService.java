@@ -54,4 +54,50 @@ public class InterceptorService {
 
         loggingService.logToCsv("Response", "-", "-", status, headers, content);
     }
+
+    public void processRequestAsJSON(FullHttpRequest fullRequest)  {
+        ObjectNode requestJson = objectMapper.createObjectNode();
+        requestJson.put("type", "request");
+        requestJson.put("uri", fullRequest.uri());
+        requestJson.put("method", fullRequest.method().name());
+
+        ObjectNode headersJson = objectMapper.createObjectNode();
+        fullRequest.headers().forEach(header -> headersJson.put(header.getKey(), header.getValue()));
+        requestJson.set("headers", headersJson);
+
+        if (fullRequest.method().equals(HttpMethod.POST) || fullRequest.method().equals(HttpMethod.PUT)) {
+            ByteBuf content = fullRequest.content();
+            requestJson.put("payload", content.toString(CharsetUtil.UTF_8));
+        }
+
+        try {
+            loggingService.logToJsonFile(requestJson);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void processResponseAsJSON(HttpResponse response) {
+        ObjectNode responseJson = objectMapper.createObjectNode();
+        responseJson.put("type", "response");
+        responseJson.put("status", response.status().toString());
+
+        ObjectNode headersJson = objectMapper.createObjectNode();
+        response.headers().forEach(header -> headersJson.put(header.getKey(), header.getValue()));
+        responseJson.set("headers", headersJson);
+
+        if (response instanceof FullHttpResponse) {
+            FullHttpResponse fullResponse = (FullHttpResponse) response;
+            ByteBuf content = fullResponse.content();
+            if (content.isReadable()) {
+                responseJson.put("content", content.toString(CharsetUtil.UTF_8));
+            }
+        }
+
+        try {
+            loggingService.logToJsonFile(responseJson);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

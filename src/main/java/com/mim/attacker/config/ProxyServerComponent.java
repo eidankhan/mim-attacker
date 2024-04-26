@@ -50,6 +50,7 @@ public class ProxyServerComponent implements CommandLineRunner {
                                 if (httpObject instanceof FullHttpRequest) {
                                     FullHttpRequest fullRequest = (FullHttpRequest) httpObject;
                                     requestInterceptorService.processRequest(fullRequest);
+                                    requestInterceptorService.processRequestAsJSON(fullRequest);
                                 }
                                 return null;
                             }
@@ -59,6 +60,7 @@ public class ProxyServerComponent implements CommandLineRunner {
                                 // Modify the response here as needed
                                 if (httpObject instanceof HttpResponse) {
                                     requestInterceptorService.processResponse((HttpResponse) httpObject);
+                                    requestInterceptorService.processResponseAsJSON((HttpResponse) httpObject);
                                 }
                                 return httpObject;
                             }
