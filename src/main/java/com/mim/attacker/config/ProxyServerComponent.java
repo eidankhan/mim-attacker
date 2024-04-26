@@ -1,5 +1,7 @@
 package com.mim.attacker.config;
 
+import com.mim.attacker.service.RequestInterceptorService;
+import io.netty.handler.codec.http.FullHttpRequest;
 import org.littleshoot.proxy.HttpFilters;
 import org.littleshoot.proxy.HttpFiltersAdapter;
 import org.littleshoot.proxy.HttpFiltersSourceAdapter;
@@ -16,6 +18,12 @@ import io.netty.handler.codec.http.HttpResponse;
 
 @Component
 public class ProxyServerComponent implements CommandLineRunner {
+    private final RequestInterceptorService requestInterceptorService;
+
+    public ProxyServerComponent(RequestInterceptorService requestInterceptorService){
+        this.requestInterceptorService = requestInterceptorService;
+    }
+
     @Override
     public void run(String... args) throws Exception {
         System.out.println("Starting ProxyServer");
@@ -39,16 +47,22 @@ public class ProxyServerComponent implements CommandLineRunner {
                             @Override
                             public HttpResponse clientToProxyRequest(HttpObject httpObject) {
                                 // Modify the request here as needed
-                                System.out.println("Request intercepted: " + originalRequest.getUri());
+                                if (httpObject instanceof FullHttpRequest) {
+                                    FullHttpRequest fullRequest = (FullHttpRequest) httpObject;
+                                    requestInterceptorService.processRequest(fullRequest);
+                                }
                                 return null;
                             }
 
                             @Override
                             public HttpObject serverToProxyResponse(HttpObject httpObject) {
                                 // Modify the response here as needed
-                                if (httpObject instanceof HttpResponse) {
-                                    HttpResponse response = (HttpResponse) httpObject;
-                                    System.out.println("Response intercepted: " + response.getStatus());
+                                if (httpObject instanceof FullHttpRequest) {
+                                    // HttpResponse response = (HttpResponse) httpObject;
+                                    // System.out.println("Response intercepted: " + response.getStatus());
+
+                                    FullHttpRequest fullHttpRequest = (FullHttpRequest) httpObject;
+                                    requestInterceptorService.processRequest(fullHttpRequest);
                                 }
                                 return httpObject;
                             }
