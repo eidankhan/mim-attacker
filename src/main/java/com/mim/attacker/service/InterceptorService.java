@@ -1,57 +1,57 @@
 package com.mim.attacker.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.netty.handler.codec.http.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.CharsetUtil;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class InterceptorService {
+    private final ObjectMapper objectMapper;
+    private final LoggingService loggingService;
+    public InterceptorService(LoggingService loggingService) {
+        this.objectMapper = new ObjectMapper();
+        this.loggingService = loggingService;
+    }
 
     public void processRequest(FullHttpRequest fullRequest) {
-        String uri = fullRequest.getUri();
-        HttpMethod method = fullRequest.getMethod();
+        String method = fullRequest.method().name();
+        String uri = fullRequest.uri();
+        String headers = fullRequest.headers().entries().stream()
+                .map(header -> header.getKey() + ":" + header.getValue())
+                .collect(Collectors.joining("; "));
 
-        // Log basic request details
-        System.out.println("Intercepted " + method + " request to " + uri);
-
-        // Handling headers
-        if (!fullRequest.headers().isEmpty()) {
-            fullRequest.headers().forEach(header -> System.out.println(header.getKey() + ": " + header.getValue()));
-        }
-
-        // Handle payload for POST and PUT methods
-        if (HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method)) {
+        String payload = "";
+        if (HttpMethod.POST.equals(fullRequest.method()) || HttpMethod.PUT.equals(fullRequest.method())) {
             ByteBuf content = fullRequest.content();
-            String payload = content.toString(CharsetUtil.UTF_8);
-            System.out.println("Payload: " + payload);
+            payload = content.toString(CharsetUtil.UTF_8);
         }
 
-        // Handle query parameters for GET requests
-        if (HttpMethod.GET.equals(method)) {
-            QueryStringDecoder decoder = new QueryStringDecoder(uri);
-            Map<String, List<String>> queryParams = decoder.parameters();
-            if (!queryParams.isEmpty()) {
-                System.out.println("Query parameters: " + queryParams);
-            }
-        }
+        loggingService.logToCsv("Request", method, uri, "-", headers, payload);
     }
 
     public void processResponse(HttpResponse response) {
-        System.out.println("Intercepted response with status: " + response.status());
-        if (!response.headers().isEmpty()) {
-            response.headers().forEach(header -> System.out.println(header.getKey() + ": " + header.getValue()));
-        }
+        String status = response.status().toString();
+        String headers = response.headers().entries().stream()
+                .map(header -> header.getKey() + ":" + header.getValue())
+                .collect(Collectors.joining("; "));
+
+        String content = "";
         if (response instanceof FullHttpResponse) {
             FullHttpResponse fullResponse = (FullHttpResponse) response;
-            ByteBuf content = fullResponse.content();
-            if (content.isReadable()) {
-                String payload = content.toString(CharsetUtil.UTF_8);
-                System.out.println("Response Content: " + payload);
+            ByteBuf buffer = fullResponse.content();
+            if (buffer.isReadable()) {
+                content = buffer.toString(CharsetUtil.UTF_8);
             }
         }
+
+        loggingService.logToCsv("Response", "-", "-", status, headers, content);
     }
 }
