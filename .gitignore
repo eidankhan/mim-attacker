@@ -8,6 +8,7 @@ src/resources/application.properties
 # Ignore JSON log files in the static directory
 /src/main/resources/static/**
 
+app.log**
 
 ### STS ###
 .apt_generated
